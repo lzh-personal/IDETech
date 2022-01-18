@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2018",
+    "rootDir": "./",
+    "outDir": "./dist",
+    "module": "commonjs",
+    "incremental": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "lib": ["ESNext"],
+    "allowJs": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "typeRoots": ["../typings", "node_modules/@types"],
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "src/**/__mocks__/*"]
+}
