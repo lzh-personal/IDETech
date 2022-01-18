@@ -5,7 +5,7 @@ start: expression EOF;
 expression
    : '(' expression ')'                                  
    | '-'  expression                                    
-   | <assoc=right> expression op='^' expression          
+   | <assoc=right> left=expression op='^' right=expression          
    | left=expression op=('*' | '/') right=expression     
    | left=expression op=('+' | '-') right=expression     
    | atom                                                

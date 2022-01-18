@@ -4,6 +4,7 @@ import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { ParseTree } from 'antlr4ts/tree/ParseTree'
 import { ParserRuleContext } from 'antlr4ts'
+import { ErrorNode } from 'antlr4ts/tree/ErrorNode'
 
 export class FormulaContextVisitor extends AbstractParseTreeVisitor<ParseTree[]> implements FormulaVisitor<ParseTree[]> {
   private target: number
@@ -17,7 +18,11 @@ export class FormulaContextVisitor extends AbstractParseTreeVisitor<ParseTree[]>
   }
 
   visitStart(context: StartContext) {
-    return this.visitContext(context.expression())
+    return this.visit(context.expression())
+  }
+
+  visitErrorNode(node: ErrorNode): ParseTree[] {
+      return [node]
   }
 
   visitExpression(context: ExpressionContext) {
@@ -58,7 +63,7 @@ export class FormulaContextVisitor extends AbstractParseTreeVisitor<ParseTree[]>
   }
 
   visitFunctionAtom(context: FunctionAtomContext) {
-    return this.visitContext(context)
+    return this.visit(context.function())
   }
 
   visitConstantAtom(context: ConstantAtomContext) {
@@ -79,40 +84,30 @@ export class FormulaContextVisitor extends AbstractParseTreeVisitor<ParseTree[]>
     return [ start, end ]
   }
 
-  /** 查寻找最接近给定 target 位置的节点 */
+  private isErrorNode(node: ParseTree) {
+    return node instanceof ErrorNode ||  (node instanceof ParserRuleContext && node.exception)
+  }
+
+  /** 向下搜索光标位置所对应的节点 */
   private visitContext(context: ParserRuleContext): ParseTree[] {
-    let targetChild: ParseTree
+    let lastNode: ParseTree | null = null
     for (let i = 0; i < context.childCount; i++) {
       const child = context.getChild(i)
       const [ start, end ] = this.getParseTreeIndex(child)
+      // 正常的搜索路径
       console.log(start, end, this.target)
       if (start <= this.target && this.target <= end) {
-        targetChild = child
-        break
+        return [context, ...this.visit(child)]
       }
+      // 光标不落在一个正常的节点上时，搜索光标位置前一个正常节点
       if (start > this.target) {
-        const [ _, lastEnd ] = this.getParseTreeIndex(targetChild)
-        // 如果当前节点相比上一个节点更接近 target，递归当前节点，否则，递归上一个节点
-        if (Math.abs(lastEnd - this.target) >= Math.abs(start - this.target)) {
-          return [context, ...this.visit(child)]
-        }else {
-          return [context, ...this.visit(targetChild)]
-        }
-      }
-      if (end < this.target) {
-        // 如果存在连续的多个词法符号补全，我们取最靠前的，如果后续有正常的节点，就继续往后取最接近的
-        if (targetChild instanceof ParserRuleContext && targetChild.exception) {
-          continue
-        }
-        targetChild = child
-        continue
+        return [context, ...this.visit(lastNode)]
+      }else if(!this.isErrorNode(child)){
+        lastNode = child
       }
     }
-    // 遍历完所有子节点后，没有找到合适的节点递归，当前光标的位置的 index 超过所有节点，为了寻找最接近的节点
-    // 在存在子节点是仍继续向下遍历
-    if (targetChild) {
-      return [context, ...this.visit(targetChild)]
-    }
-    return [context]
+    if (!lastNode) return [context]
+    if (lastNode instanceof TerminalNode) return [context, lastNode]
+    return [context, ...this.visit(lastNode)]
   }
 }

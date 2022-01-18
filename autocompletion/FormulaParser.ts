@@ -189,6 +189,7 @@ export class FormulaParser extends Parser {
 					case 1:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
+						_localctx._left = _prevctx;
 						this.pushNewRecursionContext(_localctx, _startState, FormulaParser.RULE_expression);
 						this.state = 27;
 						if (!(this.precpred(this._ctx, 4))) {
@@ -197,7 +198,7 @@ export class FormulaParser extends Parser {
 						this.state = 28;
 						_localctx._op = this.match(FormulaParser.T__3);
 						this.state = 29;
-						this.expression(4);
+						_localctx._right = this.expression(4);
 						}
 						break;
 

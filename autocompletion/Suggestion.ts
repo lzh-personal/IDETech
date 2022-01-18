@@ -4,6 +4,7 @@ import { ConstantAtomContext, ExpressionContext, FunctionContext, NumberAtomCont
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode'
 import { FormulaContextVisitor } from "./FormulaContextVisitor"
 import { ParserRuleContext } from "antlr4ts"
+import { ErrorNode } from "antlr4ts/tree/ErrorNode"
 
 /** 公式支持的类型 */
 export enum VariableType {
@@ -34,40 +35,44 @@ export class Suggestion {
     const countFunctionsVisitor = new FormulaContextVisitor()
     const result = countFunctionsVisitor.findContext(index, this.tree).reverse()
     console.log('tree', result.map(item => item.text))
-    if (result.length <= 0 || !(this.isTernimal(result[0]) || this.isErrorNode(result[0]))) {
-      // 没有位于终结符或者某错误节点上，或者没有输入，不提示
-      return []
-    }
-    // 由于只有变量以及函数需要补全，涉及的决策树不大，决策我们直接手写
-    console.log(result[0])
-    if (result[0] instanceof VariableAtomContext || result[0] instanceof ExpressionContext) {
-      console.log(result[1])
+
+    if (result[0] instanceof VariableAtomContext) {
+      // 当前光标在变量上
       if (!result[1] || result[1] instanceof ExpressionContext) {
-        // 仍然是 expression 上下文或者就没有上下文了，直接按 expression 给出提示
+        // 是 expression 上下文或者就没有上下文了，直接按 expression 给出提示
         return this.expressSuggestion(result[0].text)
       }
       if (result[1] instanceof ParamContext && result[2] instanceof FunctionContext) {
-        // 确认是函数上下文
+        // 是函数上下文
         return this.functionSuggestion(result[2], result[0])
       }
-    }else if (result[0] instanceof StringContext) {
+    } else if (result[0] instanceof StringContext) {
       // 字符串只有作为函数的参数时才尝试做提示
       if (result[1] instanceof ParamContext && result[2] instanceof FunctionContext) {
-        // 确认是函数上下文
+        // 是函数上下文
         return this.functionSuggestion(result[2], result[0])
       }
-    } else if (result[0] instanceof ParamContext) {
-      // 函数参数缺失时，不会生成具体的参数节点，这种异常情况下，仍按函数进行提示
-      if (result[1] instanceof FunctionContext) {
-        return this.functionSuggestion(result[1], result[0])
-      }
     } else if (result[0] instanceof FunctionContext) {
+      // 「fun(」的输入在 ANTLR 中会处理成两个连续的错误节点，此时我们只会搜索到一个没有下文的 function context
       return this.functionSuggestion(result[0])
     } else if (result[0] instanceof TerminalNode) {
-      // 在某一个终结符上时，有如下情况需要提示
-      // 光标位于「func()」的 ( 后，此时提示函数的第一个参数
-      if (result[1] instanceof FunctionContext) {
-        return this.functionSuggestion(result[1])
+      if (result[1] && result[1] instanceof FunctionContext) {
+        // 函数上下文中，返回了一个终结符
+        const nextNode = this.findSibling(result[1], result[0])
+        if (result[0].text === '(') {
+          // 光标位于「func()」或者「func(」的 ( 后，此时提示函数的第一个参数
+          return this.functionSuggestion(result[1])
+        }
+        if (result[0].symbol.stopIndex < index && nextNode instanceof ParamContext) {
+          return this.functionSuggestion(result[1], nextNode)
+        }
+        
+      } else if (result[1] && result[1] instanceof ExpressionContext) {
+        // 表达式上下文中，返回了一个终结符
+        if(result[0].symbol.stopIndex < index && this.isErrorNode(this.findSibling(result[1], result[0]))) {
+          // 终结符后紧跟一个错误节点，按表达式的模式提示
+          return this.expressSuggestion()
+        }
       }
     }
     return []
@@ -141,6 +146,16 @@ export class Suggestion {
   }
   /** 是否是但词法符号删除或者补全出现的错误节点 */
   isErrorNode(node: ParseTree) {
-    return node instanceof ParserRuleContext && !!node.exception
+    return (node instanceof ParserRuleContext && !!node.exception) || node instanceof ErrorNode
+  }
+
+  findSibling(parent: ParserRuleContext, node: ParseTree) {
+    let i = 0
+    for (; i < parent.childCount; i++) {
+      if (node === parent.getChild(i)) {
+        break
+      }
+    }
+    return parent.getChild(Math.min(parent.childCount - 1, i + 1))
   }
 }

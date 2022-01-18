@@ -18,5 +18,6 @@ yarn test
 测试用例位于 `tests/autocompletion.test.ts` 中，可以参考用例了解自动补全实现的用法。
 
 ##### 相关文章
-[IDE中的魔法 - 语法分析器生成工具 ANTLR](https://zhuanlan.zhihu.com/p/453333109)
-[IDE中的魔法 - 如何实现一个 parser](https://zhuanlan.zhihu.com/p/455614913)
+[IDE中的魔法 - 语法分析器生成工具 ANTLR](https://zhuanlan.zhihu.com/p/453333109)<br>
+[IDE中的魔法 - 如何实现一个 parser](https://zhuanlan.zhihu.com/p/455614913)<br>
+[IDE中的魔法 - 自动补全如何实现](https://zhuanlan.zhihu.com/p/458772392)

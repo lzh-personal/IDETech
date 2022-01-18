@@ -1,1 +1,1 @@
-1 + func('f', 3)
+testFun2(
