@@ -20,4 +20,5 @@ yarn test
 ##### 相关文章
 [IDE中的魔法 - 语法分析器生成工具 ANTLR](https://zhuanlan.zhihu.com/p/453333109)<br>
 [IDE中的魔法 - 如何实现一个 parser](https://zhuanlan.zhihu.com/p/455614913)<br>
-[IDE中的魔法 - 自动补全如何实现](https://zhuanlan.zhihu.com/p/458772392)
+[IDE中的魔法 - 自动补全如何实现](https://zhuanlan.zhihu.com/p/458772392)<br>
+[IDE中的魔法 - 如何为存在语法错误的场景提供自动补全](https://zhuanlan.zhihu.com/p/462428760)

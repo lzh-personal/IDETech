@@ -63,7 +63,8 @@ export class Suggestion {
           // 光标位于「func()」或者「func(」的 ( 后，此时提示函数的第一个参数
           return this.functionSuggestion(result[1])
         }
-        if (result[0].symbol.stopIndex < index && nextNode instanceof ParamContext) {
+        if (result[0].symbol.stopIndex <= index && nextNode instanceof ParamContext) {
+          // 光标位于终结符后（即「,」后），且后文补全的是一个参数节点，提示函数的下一个参数
           return this.functionSuggestion(result[1], nextNode)
         }
         
@@ -144,7 +145,7 @@ export class Suggestion {
       VariableAtomContext
     ].some(Fn => node instanceof Fn)
   }
-  /** 是否是但词法符号删除或者补全出现的错误节点 */
+  /** 是否是单词法符号删除或者补全出现的错误节点 */
   isErrorNode(node: ParseTree) {
     return (node instanceof ParserRuleContext && !!node.exception) || node instanceof ErrorNode
   }
